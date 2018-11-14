@@ -37,6 +37,12 @@ import events from './utilities/events'
  * @module ContextualAirspacePlugin
  */
 
+const camelCase = string => {
+  return string.replace(/-([a-z])/gi, function(all, letter) {
+    return letter.toUpperCase()
+  })
+}
+
 export default class ContextualAirspacePlugin {
   get defaults() {
     return this.constructor.defaults
@@ -190,8 +196,6 @@ export default class ContextualAirspacePlugin {
     })
     // Add Jurisdictions
     this.map.layers.add(atlasPoly)
-
-
   }
 
   /**
@@ -212,7 +216,6 @@ export default class ContextualAirspacePlugin {
     console.log(uniqueJurisdictions, 'uniqueJuri')
     return uniqueJurisdictions
   }
-
 
   /**
    * Method that takes a list of preferred rulesets, queries the map for new
@@ -248,7 +251,6 @@ export default class ContextualAirspacePlugin {
     console.log('passed defaultSelectedRulesets', defaultSelectedRulesets)
     // Handles the adding and removing of sources/layers to and from the map.
     if (!this.selectedRulesets.length) {
-
       /*
                 If selectedRulesets is empty, the plugin is loading,
                 so we'll add the preferredRulesets to the map.
@@ -388,7 +390,6 @@ export default class ContextualAirspacePlugin {
    * @private
    */
   addRuleset = ruleset => {
-    console.log(ruleset, 'addRuleset')
     // Catches any rulesets with null ids
     if (!ruleset.id) return
 
@@ -396,40 +397,42 @@ export default class ContextualAirspacePlugin {
     if (!ruleset.layers[0].length) return
 
     // Catches any sources that already exists and won't add them to the map
-    
+
     let source = this.map.sources.getById(ruleset.id)
     if (source) return
-    const rulesetIdLayer = new atlas.source.VectorTileSource(
-      ruleset.id,
-      {
+
+    if (!this.map.sources.getById(ruleset.id)) {
+
+      const rulesetIdLayer = new atlas.source.VectorTileSource(ruleset.id, {
         minZoom: 6,
         maxZoom: 12,
         tiles: [getSourceUrl(this.options.rulesetSourceUrl, ruleset.id, ruleset.layers.join(), this.apiKey)],
         url: null
-      }
-    )
+      })
+  
+      this.map.sources.add(rulesetIdLayer)
 
-    this.map.sources.add(rulesetIdLayer)
-    console.log(ruleset, 'ruleset')
-    ruleset.layers.forEach(classification => {
-      let layersToAdd = []
-      if (classification !== 'non_geo') {
-        this.styles.classifiedLayers.forEach((layer, index) => {
-          if (layer.id.split('|')[1] === classification) {
-            layersToAdd.push(layer)
+      ruleset.layers.forEach(classification => {
+        let layersToAdd = []
+        if (classification !== 'non_geo') {
+
+          this.styles.classifiedLayers.forEach((layer, index) => {
+            if (layer.id.split('|')[1] === classification) {
+              layersToAdd.push(layer)
+            }
+          })
+          if (!layersToAdd.length) {
+            this.styles.unclassifiedLayers.forEach((baseLayer, index) => {
+              this.addLayer(ruleset.id, classification, baseLayer)
+            })
+          } else {
+            layersToAdd.forEach((baseLayer, index) => {
+              this.addLayer(ruleset.id, classification, baseLayer)
+            })
           }
-        })
-        if (!layersToAdd.length) {
-          this.styles.unclassifiedLayers.forEach((baseLayer, index) => {
-            this.addLayer(ruleset.id, classification, baseLayer)
-          })
-        } else {
-          layersToAdd.forEach((baseLayer, index) => {
-            this.addLayer(ruleset.id, classification, baseLayer)
-          })
         }
-      }
-    })
+      })
+    }
   }
 
   /**
@@ -439,52 +442,34 @@ export default class ContextualAirspacePlugin {
    * @private
    */
   addLayer = (rulesetId, classification, baseLayer) => {
-/*
-                       rulesets.forEach(ruleset => {
-                            var vectorTileSource = new atlas.source.VectorTileSource(ruleset.id, {
-                                minZoom: 6,
-                                maxZoom: 12,
-                                tiles: ['https://api.airmap.com/tiledata/v1/' + ruleset.id + '/' + ruleset.layers.join(',') + '/{z}/{x}/{y}?apiKey=336d16157d9c1e7ebc0d474c2271b879078ab6b72f34ede439b6e97c5f2aedbd'],
-                                url: null
-                            }, "background");
-
-                            if (!this.map.sources.getById(ruleset.id)) {
-                                map.sources.add(vectorTileSource);
-
-                                ruleset.layers.forEach(layer => {
-                                    //Create a layer to render polygons
-                                    map.layers.add(new atlas.layer.PolygonLayer(ruleset.id, null, {
-                                        minZoom: 6,
-                                        maxZoom: 12,
-                                        sourceLayer: ruleset.id + "_" + layer,         //The name of a layer inside the vector tile source.
-                                        fillColor: getRandomColor(),
-                                        fillOpacity: 0.4
-                                    }));
-                                })
-
-                            }
-
-                        })
-*/
     let layer = { ...baseLayer }
 
-    console.log(layer,' layer ')
     if (baseLayer.id.indexOf('unclassified') > 0) {
       layer.id = layer.id.replace('unclassified', classification)
     }
 
-    if (!this.map.layers.getLayerById(`${layer.id}|${rulesetId}`)) {
-      const layerData = {
-        minZoom: classification === 'heliport' && layer.type === 'symbol' ? 11 : 6,
-        maxZoom: 12,
-        sourceLayer: rulesetId + "_" + classification,         //The name of a layer inside the vector tile source.
-        fillColor: layer.paint['fill-color'],
-        fillOpacity: layer.paint['fill-opacity'],
-      }
-      if (classification === 'tfr' || classification === 'notam') {
-        layerData.filter = getTimeFilter(4, 'hours')
-      }
-      this.map.layers.add(new atlas.layer.PolygonLayer(rulesetId, null, layerData))
+    const paint = {}
+    if (layer.paint) {
+      Object.keys(layer.paint).forEach(style => {
+        paint[camelCase(style)] = layer.paint[style]
+      })
+    }
+
+    const layerData = {
+      minZoom: classification === 'heliport' && layer.type === 'symbol' ? 11 : 6,
+      maxZoom: 12,
+      sourceLayer: rulesetId + '_' + classification, //The name of a layer inside the vector tile source.
+      'source-layer': `${rulesetId}_${classification}`
+    }
+    if (classification === 'tfr' || classification === 'notam') {
+      layerData.filter = getTimeFilter(4, 'hours')
+    }
+    const layerDataAndStyles = { ...layerData, ...paint }
+    console.log(layerDataAndStyles, 'paint')
+    if (layer.type === 'line ') {
+      this.map.layers.add(new atlas.layer.LineLayer(rulesetId, null, layerDataAndStyles))
+    } else {
+      this.map.layers.add(new atlas.layer.PolygonLayer(rulesetId, null, layerDataAndStyles))
     }
   }
 
