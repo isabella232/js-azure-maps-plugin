@@ -170,7 +170,7 @@ export default class ContextualAirspacePlugin {
    */
   setupBaseJurisdictionSource = () => {
     //const vectorTileSourceJurisdictions = new atlas.source.VectorTileSource('jurisdictions', getBaseJurisdictionLayer(this.options.baseJurisdictionSourceUrl).source, "background");
-    var vectorTileSourceJurisdictions = new atlas.source.VectorTileSource(
+    const vectorTileSourceJurisdictions = new atlas.source.VectorTileSource(
       'jurisdictions',
       {
         minZoom: 6,
@@ -224,7 +224,7 @@ export default class ContextualAirspacePlugin {
    * @public
    */
   updateRulesets(preferredRulesets, overrideRulesets, enableRecommendedRulesets) {
-    if (this.map.map._moving) return
+    if (this.map._moving) return
     const jurisdictions = this.getJurisdictionsFromMap()
     if (!jurisdictions.length) {
       return this.handleNoJurisdictions()
@@ -398,7 +398,6 @@ export default class ContextualAirspacePlugin {
     // Catches any sources that already exists and won't add them to the map
     
     let source = this.map.sources.getById(ruleset.id)
-    console.log(source, 'sourceID RULESET')
     if (source) return
     const rulesetIdLayer = new atlas.source.VectorTileSource(
       ruleset.id,
@@ -440,42 +439,52 @@ export default class ContextualAirspacePlugin {
    * @private
    */
   addLayer = (rulesetId, classification, baseLayer) => {
-    //new atlas.source.DataSource();
-    // map.sources.add(dataSource);
-////AAA
-
 /*
+                       rulesets.forEach(ruleset => {
+                            var vectorTileSource = new atlas.source.VectorTileSource(ruleset.id, {
+                                minZoom: 6,
+                                maxZoom: 12,
+                                tiles: ['https://api.airmap.com/tiledata/v1/' + ruleset.id + '/' + ruleset.layers.join(',') + '/{z}/{x}/{y}?apiKey=336d16157d9c1e7ebc0d474c2271b879078ab6b72f34ede439b6e97c5f2aedbd'],
+                                url: null
+                            }, "background");
 
- dataSource.add((new atlas.Shape(new atlas.data.Feature()
-   );
+                            if (!this.map.sources.getById(ruleset.id)) {
+                                map.sources.add(vectorTileSource);
 
+                                ruleset.layers.forEach(layer => {
+                                    //Create a layer to render polygons
+                                    map.layers.add(new atlas.layer.PolygonLayer(ruleset.id, null, {
+                                        minZoom: 6,
+                                        maxZoom: 12,
+                                        sourceLayer: ruleset.id + "_" + layer,         //The name of a layer inside the vector tile source.
+                                        fillColor: getRandomColor(),
+                                        fillOpacity: 0.4
+                                    }));
+                                })
+
+                            }
+
+                        })
 */
     let layer = { ...baseLayer }
-    console.log(layer, 'LAYER')
-    const before = layer.before
-    delete layer.before
 
+    console.log(layer,' layer ')
     if (baseLayer.id.indexOf('unclassified') > 0) {
       layer.id = layer.id.replace('unclassified', classification)
     }
 
     if (!this.map.layers.getLayerById(`${layer.id}|${rulesetId}`)) {
-      layer = {
-        ...layer,
-        id: `${layer.id}|${rulesetId}`,
-        source: rulesetId,
-        'source-layer': `${rulesetId}_${classification}`
+      const layerData = {
+        minZoom: classification === 'heliport' && layer.type === 'symbol' ? 11 : 6,
+        maxZoom: 12,
+        sourceLayer: rulesetId + "_" + classification,         //The name of a layer inside the vector tile source.
+        fillColor: layer.paint['fill-color'],
+        fillOpacity: layer.paint['fill-opacity'],
       }
       if (classification === 'tfr' || classification === 'notam') {
-        layer.filter = getTimeFilter(4, 'hours')
+        layerData.filter = getTimeFilter(4, 'hours')
       }
-      if (classification === 'heliport' && layer.type === 'symbol') {
-        layer.minzoom = 11
-      }
-      //const dataSource = new atlas.source.DataSource();
-      //dataSource.add(layer)
-      console.log(layer, 'layer')
-      this.map.layers.add(layer, before)
+      this.map.layers.add(new atlas.layer.PolygonLayer(rulesetId, null, layerData))
     }
   }
 
