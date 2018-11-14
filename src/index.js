@@ -52,7 +52,7 @@ export default class ContextualAirspacePlugin {
    * @param {boolean} opts.enableRecommendedRulesets - Specifies whether the plugin should include all recommended rulesets.
    * @param {string} opts.theme - Themes: light, dark, standard, satellite. Will specify how to style airspace layers.
    */
-  constructor(config, options, atlas) {
+  constructor(config, options) {
     this.map = null
     this.el = null
     this.isPluginLoaded = false
@@ -73,7 +73,6 @@ export default class ContextualAirspacePlugin {
     this.preferredRulesets = this.options.preferredRulesets
     this.theme = this.options.theme
     this.setTheme(this.theme)
-    this.atlas = atlas
   }
 
   /**
@@ -152,7 +151,16 @@ export default class ContextualAirspacePlugin {
     this.map.events.add('click', e => this.handleMapClick(e))
     // Handle map user action - (drag, pan, or zoom end)
     // handleMapUserActionEnd parses new jurisdiction data and handles adding/removing layers
-    this.map.events.add('mousemove', debounce(this.handleMapUserActionEnd, 700, { trailing: true }))
+    this.map.events.add('dragend', debounce(this.handleMapUserActionEnd, 700, { trailing: true }))
+
+    this.map.events.add('sourcedata', data => {
+      if (this.map.sources.getById('jurisdictions') && this.map.sources.isSourceLoaded('jurisdictions') && !this.baseJurisdictionSourceLoaded) {
+        // Parse jurisdictions
+        this.receiveJurisdictions(this.options.preferredRulesets)
+        this.baseJurisdictionSourceLoaded = true
+      }
+    })
+
     this.isPluginLoaded = true
   }
 
@@ -161,22 +169,29 @@ export default class ContextualAirspacePlugin {
    * @private
    */
   setupBaseJurisdictionSource = () => {
-
-    const vectorTileSourceJurisdictions = new this.atlas.source.VectorTileSource('jurisdictions', getBaseJurisdictionLayer(this.options.baseJurisdictionSourceUrl), "background");
-    this.map.sources.add(vectorTileSourceJurisdictions);
-    this.map.layers.add(new this.atlas.layer.PolygonLayer(vectorTileSourceJurisdictions, null, {
+    //const vectorTileSourceJurisdictions = new atlas.source.VectorTileSource('jurisdictions', getBaseJurisdictionLayer(this.options.baseJurisdictionSourceUrl).source, "background");
+    var vectorTileSourceJurisdictions = new atlas.source.VectorTileSource(
+      'jurisdictions',
+      {
+        minZoom: 6,
+        maxZoom: 12,
+        tiles: ['https://api.airmap.com/tiledata/v1/base-jurisdiction/{z}/{x}/{y}'],
+        url: null
+      },
+      'background'
+    )
+    console.log(vectorTileSourceJurisdictions, 'vector source')
+    this.map.sources.add(vectorTileSourceJurisdictions)
+    const atlasPoly = new atlas.layer.PolygonLayer(vectorTileSourceJurisdictions, null, {
       minZoom: 6,
       maxZoom: 12,
       sourceLayer: 'jurisdictions',
       fillOpacity: 0
-    }));
-    /*this.map.addLayer(getBaseJurisdictionLayer(this.options.baseJurisdictionSourceUrl), 'background');
-        this.map.on('sourcedata', data => {
-            if (data.isSourceLoaded && data.sourceId === 'jurisdictions' && !this.baseJurisdictionSourceLoaded) {
-                this.receiveJurisdictions(this.options.preferredRulesets)
-                this.baseJurisdictionSourceLoaded = true
-            }
-        });*/
+    })
+    // Add Jurisdictions
+    this.map.layers.add(atlasPoly)
+
+
   }
 
   /**
@@ -186,16 +201,18 @@ export default class ContextualAirspacePlugin {
    */
   getJurisdictionsFromMap = () => {
     const layers = this.map.layers.getRenderedShapes()
-    console.log(layers, 'LAYERS')
-    const lastIndex = findLastIndex(layers, feature => feature.layer.source === 'composite')
-    console.log(lastIndex, 'LAST INDEX')
-    let jurisdictions = layers.slice(lastIndex)
-    jurisdictions = jurisdictions
-      .filter(feature => feature.layer.source === 'jurisdictions' && feature.properties.jurisdiction)
-      .map(feature => JSON.parse(feature.properties.jurisdiction))
-      .filter(jurisdiction => !!jurisdiction.rulesets.length)
-    return uniqBy(jurisdictions, 'id')
+    // Iterate through layers
+    const jurisdictions = layers.filter(x => x.layer.source == 'jurisdictions' && x.properties.jurisdiction).map(feature => JSON.parse(feature.properties.jurisdiction))
+    // Remove duplicate or empty jurisdictions
+    const uniqueJurisdictions = jurisdictions
+      .filter(x => x.rulesets.length > 0)
+      .filter((obj, pos, arr) => {
+        return arr.map(mapObj => mapObj['uuid']).indexOf(obj['uuid']) === pos
+      })
+    console.log(uniqueJurisdictions, 'uniqueJuri')
+    return uniqueJurisdictions
   }
+
 
   /**
    * Method that takes a list of preferred rulesets, queries the map for new
@@ -207,7 +224,6 @@ export default class ContextualAirspacePlugin {
    * @public
    */
   updateRulesets(preferredRulesets, overrideRulesets, enableRecommendedRulesets) {
-      console.log(this.map.map._moving, 'moving')
     if (this.map.map._moving) return
     const jurisdictions = this.getJurisdictionsFromMap()
     if (!jurisdictions.length) {
@@ -222,15 +238,17 @@ export default class ContextualAirspacePlugin {
     if (this.options.overrideRulesets && this.options.overrideRulesets.length) {
       return this.handleOverrideRulesets(jurisdictions)
     }
+    console.log('passed handleOverrides')
 
     // Array of Retrieved Jurisdictions with rulesets organized by type
     const parsedJurisdictionRulesets = organizeJurisdictionRulesetsByType(jurisdictions)
-
+    console.log('passed organizeJurisdictionRulesetsByType', parsedJurisdictionRulesets)
     // Gathers the default selected rulesets: required, pick1 defaults, and optional if selected by user previously
     const defaultSelectedRulesets = getDefaultSelectedRulesets(parsedJurisdictionRulesets, preferredRulesets, null, this.options.enableRecommendedRulesets)
-
+    console.log('passed defaultSelectedRulesets', defaultSelectedRulesets)
     // Handles the adding and removing of sources/layers to and from the map.
     if (!this.selectedRulesets.length) {
+
       /*
                 If selectedRulesets is empty, the plugin is loading,
                 so we'll add the preferredRulesets to the map.
@@ -246,7 +264,6 @@ export default class ContextualAirspacePlugin {
       rulesetsToRemove.forEach(ruleset => this.removeRuleset(ruleset))
       defaultSelectedRulesets.forEach(ruleset => this.addRuleset(ruleset))
     }
-
     this.jurisdictions = parsedJurisdictionRulesets
     this.selectedRulesets = defaultSelectedRulesets
     this.preferredRulesets = preferredRulesets
@@ -371,6 +388,7 @@ export default class ContextualAirspacePlugin {
    * @private
    */
   addRuleset = ruleset => {
+    console.log(ruleset, 'addRuleset')
     // Catches any rulesets with null ids
     if (!ruleset.id) return
 
@@ -378,15 +396,22 @@ export default class ContextualAirspacePlugin {
     if (!ruleset.layers[0].length) return
 
     // Catches any sources that already exists and won't add them to the map
-    let source = this.map.getSource(ruleset.id)
+    
+    let source = this.map.sources.getById(ruleset.id)
+    console.log(source, 'sourceID RULESET')
     if (source) return
+    const rulesetIdLayer = new atlas.source.VectorTileSource(
+      ruleset.id,
+      {
+        minZoom: 6,
+        maxZoom: 12,
+        tiles: [getSourceUrl(this.options.rulesetSourceUrl, ruleset.id, ruleset.layers.join(), this.apiKey)],
+        url: null
+      }
+    )
 
-    this.map.addSource(ruleset.id, {
-      type: 'vector',
-      tiles: [getSourceUrl(this.options.rulesetSourceUrl, ruleset.id, ruleset.layers.join(), this.apiKey)],
-      minzoom: 6,
-      maxzoom: 12
-    })
+    this.map.sources.add(rulesetIdLayer)
+    console.log(ruleset, 'ruleset')
     ruleset.layers.forEach(classification => {
       let layersToAdd = []
       if (classification !== 'non_geo') {
@@ -415,7 +440,18 @@ export default class ContextualAirspacePlugin {
    * @private
    */
   addLayer = (rulesetId, classification, baseLayer) => {
+    //new atlas.source.DataSource();
+    // map.sources.add(dataSource);
+////AAA
+
+/*
+
+ dataSource.add((new atlas.Shape(new atlas.data.Feature()
+   );
+
+*/
     let layer = { ...baseLayer }
+    console.log(layer, 'LAYER')
     const before = layer.before
     delete layer.before
 
@@ -423,7 +459,7 @@ export default class ContextualAirspacePlugin {
       layer.id = layer.id.replace('unclassified', classification)
     }
 
-    if (!this.map.getLayer(`${layer.id}|${rulesetId}`)) {
+    if (!this.map.layers.getLayerById(`${layer.id}|${rulesetId}`)) {
       layer = {
         ...layer,
         id: `${layer.id}|${rulesetId}`,
@@ -436,7 +472,10 @@ export default class ContextualAirspacePlugin {
       if (classification === 'heliport' && layer.type === 'symbol') {
         layer.minzoom = 11
       }
-      this.map.addLayer(layer, before)
+      //const dataSource = new atlas.source.DataSource();
+      //dataSource.add(layer)
+      console.log(layer, 'layer')
+      this.map.layers.add(layer, before)
     }
   }
 
@@ -448,7 +487,7 @@ export default class ContextualAirspacePlugin {
    * @private
    */
   removeRuleset = ruleset => {
-    let source = this.map.getSource(ruleset.id)
+    let source = this.map.sources.getById(ruleset.id)
     if (source) {
       this.map.getStyle().layers.forEach(layer => {
         if (layer.source === ruleset.id) this.map.removeLayer(layer.id)

@@ -103,12 +103,12 @@ export function isArrayOfStrings(array) {
 * Returns a Mapbox style layer based on the AirMap Base Jurisdiction vector source.
 * @return {Object} Object conforming to the Mapbox Style Spec for layers.
 */
+
 export function getBaseJurisdictionLayer(baseJurisdictionSourceUrl) {
     return {
         "id": "jurisdictions",
         "type": "fill",
         "source": {
-            type: 'vector',
             tiles: [ baseJurisdictionSourceUrl ],
             "minzoom": 6,
             "maxzoom": 12
