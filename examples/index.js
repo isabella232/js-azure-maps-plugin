@@ -14,23 +14,16 @@ limitations under the License. */
 
 const ContextualAirspacePlugin = require('../src/index.js').default
 const AIRMAP_API_KEY = localStorage.getItem('AIRMAP_API_KEY')
-const MAPBOX_ACCESS_TOKEN = localStorage.getItem('MAPBOX_ACCESS_TOKEN')
+const AZURE_ACCESS_TOKEN = localStorage.getItem('AZURE_ACCESS_TOKEN')
 
-if (AIRMAP_API_KEY && MAPBOX_ACCESS_TOKEN) {
-    mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN
-    
-    const standard = 'mapbox://styles/airmap/cipg7gw9u000jbam53kwpal1q'
-    const light = 'mapbox://styles/airmap/ciprepvql000xbbnn8anxyb19'
-    const dark = 'mapbox://styles/airmap/ciprerhe7000vbfnj3luzf2g6'
-    const satellite = 'mapbox://styles/airmap/ciprk6y7b001qekm7sjrh9f9v'
+//if (AIRMAP_API_KEY && AZURE_ACCESS_TOKEN) {
+    atlas.setSubscriptionKey(AZURE_ACCESS_TOKEN);
+    //Initialize a map instance.
+    const map = new atlas.Map("map", {
+        center: [-118.270293, 34.039737],
+        zoom: 14
+    });
 
-    const map = new mapboxgl.Map({
-        container: 'map',
-        style: light,
-        // Santa Monica
-        center: [-118.496475, 34.024212],
-        zoom: 13
-    })
     const config = {
         "airmap": {
             "api_key": AIRMAP_API_KEY
@@ -39,8 +32,8 @@ if (AIRMAP_API_KEY && MAPBOX_ACCESS_TOKEN) {
             "client_id": "",
             "callback_url": ""
         },
-        "mapbox": {
-            "access_token": MAPBOX_ACCESS_TOKEN
+        "atlas": {
+            "access_token": AZURE_ACCESS_TOKEN
         }
     }
     const options = {
@@ -60,8 +53,20 @@ if (AIRMAP_API_KEY && MAPBOX_ACCESS_TOKEN) {
         rulesetSourceUrl: localStorage.getItem('RULESET_SOURCE_URL'),
         ruleApiUrl: localStorage.getItem('RULE_API_URL'),
     }
-    const plugin = new ContextualAirspacePlugin(config, options);
-    map.addControl(plugin, 'top-left')
+    const plugin = new ContextualAirspacePlugin(config, options, atlas)
+    //Wait until the map resources have fully loaded.
+    map.events.add('load', function () {
+        //Add the zoom control to the map.
+
+        map.controls.add(new atlas.control.ZoomControl(), {
+            position: 'top-right'
+        });
+        console.log(atlas.control.ZoomControl, ' ZOOM CONTROL')
+        map.controls.add(plugin, 'bottom-right')
+
+       // map.controls.add(plugin, 'bottom-left')
+
+    });
 
     // Example for how ruleset changes are surfaced to the consuming application.
     plugin.on('jurisdictionChange', (data) => console.log('jurisdictionChange', data))
@@ -74,7 +79,7 @@ if (AIRMAP_API_KEY && MAPBOX_ACCESS_TOKEN) {
         })
         plugin.updateRulesets(['usa_sec_333'], [], false);
     }, 5000)
-} else {
+/*} else {
     console.error(
         'Missing AIRMAP_API_KEY or MAPBOX_ACCESS_TOKEN. ' +
         'These are required for developing locally.\n\n' +
@@ -82,4 +87,4 @@ if (AIRMAP_API_KEY && MAPBOX_ACCESS_TOKEN) {
         'localStorage.setItem(\'AIRMAP_API_KEY\', \'<your_key>\');\n' +
         'localStorage.setItem(\'MAPBOX_ACCESS_TOKEN\', \'<your_token>\');\n\n'
     );
-}
+}*/
