@@ -12,7 +12,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. */
 
-import { debounce, get, find, findLastIndex, uniqBy, differenceBy } from 'lodash'
+import { debounce, get, findLastIndex, uniqBy, differenceBy } from 'lodash'
 import fetchMapStyles from './utilities/styles'
 import { BadConfigError, BadOptionWarn } from './utilities/error.js'
 import {
@@ -85,7 +85,7 @@ export default class ContextualAirspacePlugin {
     this.map = map
     this.requestStyles()
     if (this.map.loaded) this.mapSetup()
-    else this.map.events.on('load', () => this.mapSetup())
+    else this.map.events.add('load', () => this.mapSetup())
 
     this.el = document.createElement('div')
     this.el.className = 'atlas-ctrl-airmap-rules atlas-ctrl'
@@ -161,18 +161,15 @@ export default class ContextualAirspacePlugin {
    * @private
    */
   setupBaseJurisdictionSource = () => {
-    const dataSource = new this.atlas.source.DataSource()
-    console.log(dataSource, 'dataSource')
-    this.map.sources.add(dataSource)
-    const baseJuri = getBaseJurisdictionLayer(this.options.baseJurisdictionSourceUrl)
-    console.log(baseJuri, 'BASE JURI')
-    //dataSource.add(baseJuri)
-    this.map.layers.add(
-      new atlas.layer.PolygonLayer(dataSource, null, {
-        fillColor: 'rgba(0, 200, 200, 0.5)'
-      })
-    )
 
+    const vectorTileSourceJurisdictions = new this.atlas.source.VectorTileSource('jurisdictions', getBaseJurisdictionLayer(this.options.baseJurisdictionSourceUrl), "background");
+    this.map.sources.add(vectorTileSourceJurisdictions);
+    this.map.layers.add(new this.atlas.layer.PolygonLayer(vectorTileSourceJurisdictions, null, {
+      minZoom: 6,
+      maxZoom: 12,
+      sourceLayer: 'jurisdictions',
+      fillOpacity: 0
+    }));
     /*this.map.addLayer(getBaseJurisdictionLayer(this.options.baseJurisdictionSourceUrl), 'background');
         this.map.on('sourcedata', data => {
             if (data.isSourceLoaded && data.sourceId === 'jurisdictions' && !this.baseJurisdictionSourceLoaded) {
