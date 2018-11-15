@@ -28,13 +28,13 @@ import {
 } from './utilities'
 import events from './utilities/events'
 
-function getRandomColor() {
-  var letters = '0123456789ABCDEF';
-  var color = '#';
-  for (var i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
+const convertCssToAzureStyles = (style) => {
+  switch(style){
+    case 'lineColor': return 'strokeColor'
+    case 'lineOpacity': return 'strokeOpacity'
+    case 'lineWidth': return 'strokeWidth'
+    default: return style
   }
-  return color;
 }
 /**
  * Class that parses our contextual airspace data and sets the map with layers for interacting with that data.
@@ -94,7 +94,6 @@ export default class ContextualAirspacePlugin {
    * which is the recommended method to remove controls.
    */
   onAdd = map => {
-    console.log(map, 'map')
     this.map = map
     this.requestStyles()
     if (this.map.loaded) this.mapSetup()
@@ -194,7 +193,6 @@ export default class ContextualAirspacePlugin {
       },
       'background'
     )
-    console.log(vectorTileSourceJurisdictions, 'vector source')
     this.map.sources.add(vectorTileSourceJurisdictions)
     const atlasPoly = new atlas.layer.PolygonLayer(vectorTileSourceJurisdictions, null, {
       minZoom: 6,
@@ -221,8 +219,8 @@ export default class ContextualAirspacePlugin {
       .filter((obj, pos, arr) => {
         return arr.map(mapObj => mapObj['uuid']).indexOf(obj['uuid']) === pos
       })
-    console.log(uniqueJurisdictions, 'uniqueJuri')
-    return uniqueJurisdictions
+
+      return uniqueJurisdictions
   }
 
   /**
@@ -249,14 +247,10 @@ export default class ContextualAirspacePlugin {
     if (this.options.overrideRulesets && this.options.overrideRulesets.length) {
       return this.handleOverrideRulesets(jurisdictions)
     }
-    console.log('passed handleOverrides')
-
     // Array of Retrieved Jurisdictions with rulesets organized by type
     const parsedJurisdictionRulesets = organizeJurisdictionRulesetsByType(jurisdictions)
-    console.log('passed organizeJurisdictionRulesetsByType', parsedJurisdictionRulesets)
     // Gathers the default selected rulesets: required, pick1 defaults, and optional if selected by user previously
     const defaultSelectedRulesets = getDefaultSelectedRulesets(parsedJurisdictionRulesets, preferredRulesets, null, this.options.enableRecommendedRulesets)
-    console.log('passed defaultSelectedRulesets', defaultSelectedRulesets)
     // Handles the adding and removing of sources/layers to and from the map.
     if (!this.selectedRulesets.length) {
       /*
@@ -451,7 +445,8 @@ export default class ContextualAirspacePlugin {
    */
   addLayer = (rulesetId, classification, baseLayer) => {
     let layer = { ...baseLayer }
-    console.log(layer, 'LAYER')
+    const before = layer.before;
+    delete layer.before;
     if (baseLayer.id.indexOf('unclassified') > 0) {
       layer.id = layer.id.replace('unclassified', classification)
     }
@@ -460,7 +455,7 @@ export default class ContextualAirspacePlugin {
     //styles are in traditional css styles not JS styles (aka cammel case)
     if (layer.paint) {
       Object.keys(layer.paint).forEach(style => {
-        paint[camelCase(style)] = layer.paint[style]
+        paint[convertCssToAzureStyles(camelCase(style))] = layer.paint[style]
       })
     }
     // so converting to cammel case then object merging with other data
@@ -469,20 +464,18 @@ export default class ContextualAirspacePlugin {
       minZoom: classification === 'heliport' && layer.type === 'symbol' ? 11 : 6,
       maxZoom: 12,
       sourceLayer: `${rulesetId}_${classification}`,
-      fillColor: getRandomColor(),
-      fillOpacity: 0.4
     }
     if (classification === 'tfr' || classification === 'notam') {
       layerData.filter = getTimeFilter(4, 'hours')
     }
 
-    let layerDataAndStyles = { ...layerData }
+    const layerDataAndStyles = { ...layerData, ...paint }
     if (layer.type === 'line') {
-      this.map.layers.add(new atlas.layer.LineLayer(rulesetId, null, layerDataAndStyles))
+      this.map.layers.add(new atlas.layer.LineLayer(rulesetId, null, layerDataAndStyles), before)
     } else {
-      layerDataAndStyles = { ...layerData, ...paint,  fillOpacity: 0.2}
+      const opacityIncreased = {...layerDataAndStyles, fillOpacity: .02}
 
-      this.map.layers.add(new atlas.layer.PolygonLayer(rulesetId, null, layerDataAndStyles))
+      this.map.layers.add(new atlas.layer.PolygonLayer(rulesetId, `${layer.id}|${rulesetId}`, opacityIncreased), before)
     }
   }
 
@@ -496,10 +489,11 @@ export default class ContextualAirspacePlugin {
   removeRuleset = ruleset => {
     let source = this.map.sources.getById(ruleset.id)
     if (source) {
-      this.map.getStyle().layers.forEach(layer => {
-        if (layer.source === ruleset.id) this.map.removeLayer(layer.id)
+      const mapLayers = this.map.layers.getLayers()
+      mapLayers.forEach(({options, id}) => {
+        if(options && options.source === ruleset.id)  this.map.layers.remove(id)
       })
-      this.map.removeSource(ruleset.id)
+      this.map.sources.remove(ruleset.id)
     }
   }
 
@@ -510,7 +504,7 @@ export default class ContextualAirspacePlugin {
    * @private
    */
   handleMapClick = data => {
-    const features = data.target.queryRenderedFeatures(data.point).filter(f => f.layer.id.indexOf('airmap') > -1 && f.properties.id)
+    const features = data.shapes.filter(f => f.layer.id.indexOf('airmap') > -1 && f.properties.id)
     if (features.length) {
       events.fire('airspaceLayerClick', {
         layers: features
