@@ -21,7 +21,7 @@ const AZURE_ACCESS_TOKEN = localStorage.getItem('AZURE_ACCESS_TOKEN')
     //Initialize a map instance.
     const map = new atlas.Map("map", {
         center: [-118.270293, 34.039737],
-        zoom: 14
+        zoom: 4
     });
 
     const config = {
