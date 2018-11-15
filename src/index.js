@@ -111,9 +111,15 @@ export default class ContextualAirspacePlugin {
    * @private
    * @returns {ContextualAirspace} - `this`
    */
+  
   onRemove = map => {
-    this.map.off('click', this.handleMapClick)
-    this.map.off('moveend', this.handleMapUserActionEnd)
+    this.map.events.remove('click', this.handleMapClick)
+    // Handle map user action - (drag, pan, or zoom end)
+    // handleMapUserActionEnd parses new jurisdiction data and handles adding/removing layers
+    this.map.events.remove('dragend', this.handleMapUserActionEnd)
+
+    this.map.events.remove('sourcedata', this.onSourceDataAdd)
+
 
     this.map = null
     this.el.parentNode.removeChild(this.el)
@@ -159,20 +165,23 @@ export default class ContextualAirspacePlugin {
    * Sets up the map, the initial source for rulesets, and binds the event listeners.
    * @private
    */
+
+  onSourceDataAdd = (data) => {
+    if (this.map.sources.getById('jurisdictions') && this.map.sources.isSourceLoaded('jurisdictions') && !this.baseJurisdictionSourceLoaded) {
+      // Parse jurisdictions
+      this.receiveJurisdictions(this.options.preferredRulesets)
+      this.baseJurisdictionSourceLoaded = true
+    }
+  }
+
   mapSetup = () => {
     this.setupBaseJurisdictionSource()
-    this.map.events.add('click', e => this.handleMapClick(e))
+    this.map.events.add('click', this.handleMapClick)
     // Handle map user action - (drag, pan, or zoom end)
     // handleMapUserActionEnd parses new jurisdiction data and handles adding/removing layers
     this.map.events.add('dragend', debounce(this.handleMapUserActionEnd, 700, { trailing: true }))
 
-    this.map.events.add('sourcedata', data => {
-      if (this.map.sources.getById('jurisdictions') && this.map.sources.isSourceLoaded('jurisdictions') && !this.baseJurisdictionSourceLoaded) {
-        // Parse jurisdictions
-        this.receiveJurisdictions(this.options.preferredRulesets)
-        this.baseJurisdictionSourceLoaded = true
-      }
-    })
+    this.map.events.add('sourcedata', this.onSourceDataAdd)
 
     this.isPluginLoaded = true
   }
