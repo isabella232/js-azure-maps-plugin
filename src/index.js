@@ -242,7 +242,7 @@ export default class ContextualAirspacePlugin {
    * @public
    */
   updateRulesets(preferredRulesets, overrideRulesets, enableRecommendedRulesets) {
-    if (this.map._moving) return
+    if (this.map.map._moving) return
     const jurisdictions = this.getJurisdictionsFromMap()
     if (!jurisdictions.length) {
       return this.handleNoJurisdictions()
