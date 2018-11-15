@@ -20,7 +20,7 @@ const AZURE_ACCESS_TOKEN = localStorage.getItem('AZURE_ACCESS_TOKEN')
     atlas.setSubscriptionKey(AZURE_ACCESS_TOKEN);
     //Initialize a map instance.
     const map = new atlas.Map("map", {
-        center: [-118.270293, 34.039737],
+        center: [-118.496475, 34.024212],
         zoom: 14
     });
 
@@ -61,7 +61,6 @@ const AZURE_ACCESS_TOKEN = localStorage.getItem('AZURE_ACCESS_TOKEN')
         map.controls.add(new atlas.control.ZoomControl(), {
             position: 'top-right'
         });
-        console.log(atlas.control.ZoomControl, ' ZOOM CONTROL')
         map.controls.add(plugin, 'bottom-right')
 
        // map.controls.add(plugin, 'bottom-left')

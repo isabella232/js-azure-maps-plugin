@@ -191,11 +191,10 @@ export default class ContextualAirspacePlugin {
    * @private
    */
   setupBaseJurisdictionSource = () => {
-    //const vectorTileSourceJurisdictions = new atlas.source.VectorTileSource('jurisdictions', getBaseJurisdictionLayer(this.options.baseJurisdictionSourceUrl).source, "background");
     const vectorTileSourceJurisdictions = new atlas.source.VectorTileSource(
       'jurisdictions',
       {
-        minZoom: 6,
+        minZoom: 0,
         maxZoom: 12,
         tiles: ['https://api.airmap.com/tiledata/v1/base-jurisdiction/{z}/{x}/{y}'],
         url: null
@@ -204,7 +203,7 @@ export default class ContextualAirspacePlugin {
     )
     this.map.sources.add(vectorTileSourceJurisdictions)
     const atlasPoly = new atlas.layer.PolygonLayer(vectorTileSourceJurisdictions, null, {
-      minZoom: 6,
+      minZoom: 0,
       maxZoom: 12,
       sourceLayer: 'jurisdictions',
       fillOpacity: 0
