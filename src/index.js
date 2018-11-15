@@ -194,8 +194,7 @@ export default class ContextualAirspacePlugin {
     const vectorTileSourceJurisdictions = new atlas.source.VectorTileSource(
       'jurisdictions',
       {
-        minZoom: 0,
-        maxZoom: 12,
+        minZoom: 6,
         tiles: ['https://api.airmap.com/tiledata/v1/base-jurisdiction/{z}/{x}/{y}'],
         url: null
       },
@@ -203,8 +202,7 @@ export default class ContextualAirspacePlugin {
     )
     this.map.sources.add(vectorTileSourceJurisdictions)
     const atlasPoly = new atlas.layer.PolygonLayer(vectorTileSourceJurisdictions, null, {
-      minZoom: 0,
-      maxZoom: 12,
+      minZoom: 6,
       sourceLayer: 'jurisdictions',
       fillOpacity: 0
     })
@@ -415,7 +413,6 @@ export default class ContextualAirspacePlugin {
 
       const rulesetIdLayer = new atlas.source.VectorTileSource(ruleset.id, {
         minZoom: 6,
-        maxZoom: 12,
         tiles: [getSourceUrl(this.options.rulesetSourceUrl, ruleset.id, ruleset.layers.join(), this.apiKey)],
         url: null
       }, "background")
@@ -470,7 +467,6 @@ export default class ContextualAirspacePlugin {
 
     const layerData = {
       minZoom: classification === 'heliport' && layer.type === 'symbol' ? 11 : 6,
-      maxZoom: 12,
       sourceLayer: `${rulesetId}_${classification}`,
     }
     if (classification === 'tfr' || classification === 'notam') {

@@ -20,8 +20,9 @@ const AZURE_ACCESS_TOKEN = localStorage.getItem('AZURE_ACCESS_TOKEN')
     atlas.setSubscriptionKey(AZURE_ACCESS_TOKEN);
     //Initialize a map instance.
     const map = new atlas.Map("map", {
-        center: [-118.496475, 34.024212],
-        zoom: 14
+        center: [-118.270293, 34.039737],
+        zoom: 4,
+        style: "grayscale_dark" 
     });
 
     const config = {
@@ -45,7 +46,7 @@ const AZURE_ACCESS_TOKEN = localStorage.getItem('AZURE_ACCESS_TOKEN')
             // 'usa_part_107'
         ],
         enableRecommendedRulesets: true,
-        theme: 'light',
+        theme: 'dark',
         // Specific options for development purposes only
         baseJurisdictionSourceUrl: localStorage.getItem('BASE_JURISDICTION_SOURCE_URL'),
         mapStylesUrl: localStorage.getItem('MAP_STYLES_URL'),
