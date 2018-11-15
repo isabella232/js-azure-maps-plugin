@@ -28,6 +28,14 @@ import {
 } from './utilities'
 import events from './utilities/events'
 
+function getRandomColor() {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
 /**
  * Class that parses our contextual airspace data and sets the map with layers for interacting with that data.
  */
@@ -408,7 +416,7 @@ export default class ContextualAirspacePlugin {
         maxZoom: 12,
         tiles: [getSourceUrl(this.options.rulesetSourceUrl, ruleset.id, ruleset.layers.join(), this.apiKey)],
         url: null
-      })
+      }, "background")
   
       this.map.sources.add(rulesetIdLayer)
 
@@ -443,32 +451,37 @@ export default class ContextualAirspacePlugin {
    */
   addLayer = (rulesetId, classification, baseLayer) => {
     let layer = { ...baseLayer }
-
+    console.log(layer, 'LAYER')
     if (baseLayer.id.indexOf('unclassified') > 0) {
       layer.id = layer.id.replace('unclassified', classification)
     }
 
     const paint = {}
+    //styles are in traditional css styles not JS styles (aka cammel case)
     if (layer.paint) {
       Object.keys(layer.paint).forEach(style => {
         paint[camelCase(style)] = layer.paint[style]
       })
     }
+    // so converting to cammel case then object merging with other data
 
     const layerData = {
       minZoom: classification === 'heliport' && layer.type === 'symbol' ? 11 : 6,
       maxZoom: 12,
-      sourceLayer: rulesetId + '_' + classification, //The name of a layer inside the vector tile source.
-      'source-layer': `${rulesetId}_${classification}`
+      sourceLayer: `${rulesetId}_${classification}`,
+      fillColor: getRandomColor(),
+      fillOpacity: 0.4
     }
     if (classification === 'tfr' || classification === 'notam') {
       layerData.filter = getTimeFilter(4, 'hours')
     }
-    const layerDataAndStyles = { ...layerData, ...paint }
-    console.log(layerDataAndStyles, 'paint')
-    if (layer.type === 'line ') {
+
+    let layerDataAndStyles = { ...layerData }
+    if (layer.type === 'line') {
       this.map.layers.add(new atlas.layer.LineLayer(rulesetId, null, layerDataAndStyles))
     } else {
+      layerDataAndStyles = { ...layerData, ...paint,  fillOpacity: 0.2}
+
       this.map.layers.add(new atlas.layer.PolygonLayer(rulesetId, null, layerDataAndStyles))
     }
   }
