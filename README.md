@@ -19,10 +19,10 @@ You'll also need to register for a [Azure Maps Access Token](https://azure.micro
 
 ```html
 <!-- Latest patch release -->
-<script src="https://cdn.airmap.io/js/contextual-airspace/1.0.0/airmap.contextual-airspace-plugin.min.js"></script>
+<script src="TBD"></script>
 
 <!-- Latest minor release -->
-<script src="https://cdn.airmap.io/js/contextual-airspace/v1.0/airmap.contextual-airspace-plugin.min.js"></script>
+<script src="TBD"></script>
 ```
 
 ### From [npm](https://npmjs.org)
