@@ -17,7 +17,6 @@ import fetchMapStyles from './utilities/styles'
 import { BadConfigError, BadOptionWarn } from './utilities/error.js'
 import {
   didJurisdictionsChange,
-  getBaseJurisdictionLayer,
   getDefaultSelectedRulesets,
   getOptions,
   getOverridenRulesets,
@@ -36,6 +35,7 @@ const convertCssToAzureStyles = (style) => {
     default: return style
   }
 }
+
 /**
  * Class that parses our contextual airspace data and sets the map with layers for interacting with that data.
  */

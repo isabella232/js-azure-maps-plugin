@@ -1,9 +1,9 @@
 {
   "name": "airmap-contextual-airspace-plugin",
   "version": "1.2.0",
-  "description": "Mapbox GL JS plugin to view and interact with AirMap's Contextual Airspace Rules",
+  "description": "Azure Maps JS plugin to view and interact with AirMap's Contextual Airspace Rules",
   "main": "dist/index.js",
-  "repository": "airmap/js-contextual-airspace-plugin",
+  "repository": "airmap/js-azure-maps-plugin",
   "scripts": {
     "clean": "rm -rf dist",
     "init": "mkdir dist",

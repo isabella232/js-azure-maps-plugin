@@ -16,13 +16,13 @@ const ContextualAirspacePlugin = require('../src/index.js').default
 const AIRMAP_API_KEY = localStorage.getItem('AIRMAP_API_KEY')
 const AZURE_ACCESS_TOKEN = localStorage.getItem('AZURE_ACCESS_TOKEN')
 
-//if (AIRMAP_API_KEY && AZURE_ACCESS_TOKEN) {
+if (AIRMAP_API_KEY && AZURE_ACCESS_TOKEN) {
     atlas.setSubscriptionKey(AZURE_ACCESS_TOKEN);
     //Initialize a map instance.
     const map = new atlas.Map("map", {
         center: [-118.270293, 34.039737],
-        zoom: 4,
-        style: "grayscale_dark" 
+        zoom: 8,
+        style: "road" 
     });
 
     const config = {
@@ -46,7 +46,7 @@ const AZURE_ACCESS_TOKEN = localStorage.getItem('AZURE_ACCESS_TOKEN')
             // 'usa_part_107'
         ],
         enableRecommendedRulesets: true,
-        theme: 'dark',
+        theme: 'light',
         // Specific options for development purposes only
         baseJurisdictionSourceUrl: localStorage.getItem('BASE_JURISDICTION_SOURCE_URL'),
         mapStylesUrl: localStorage.getItem('MAP_STYLES_URL'),
@@ -58,28 +58,17 @@ const AZURE_ACCESS_TOKEN = localStorage.getItem('AZURE_ACCESS_TOKEN')
     //Wait until the map resources have fully loaded.
     map.events.add('load', function () {
         //Add the zoom control to the map.
-
         map.controls.add(new atlas.control.ZoomControl(), {
             position: 'top-right'
         });
         map.controls.add(plugin, 'bottom-right')
-
-       // map.controls.add(plugin, 'bottom-left')
-
     });
 
     // Example for how ruleset changes are surfaced to the consuming application.
     plugin.on('jurisdictionChange', (data) => console.log('jurisdictionChange', data))
     plugin.on('airspaceLayerClick', (data) => console.log('airspaceLayerClick', data))
 
-    setTimeout(() => {
-        console.log({
-            jurisdictions: plugin.getJurisdictions(),
-            selectedRulelsets: plugin.getSelectedRulesets()
-        })
-        plugin.updateRulesets(['usa_sec_333'], [], false);
-    }, 5000)
-/*} else {
+} else {
     console.error(
         'Missing AIRMAP_API_KEY or MAPBOX_ACCESS_TOKEN. ' +
         'These are required for developing locally.\n\n' +
@@ -87,4 +76,4 @@ const AZURE_ACCESS_TOKEN = localStorage.getItem('AZURE_ACCESS_TOKEN')
         'localStorage.setItem(\'AIRMAP_API_KEY\', \'<your_key>\');\n' +
         'localStorage.setItem(\'MAPBOX_ACCESS_TOKEN\', \'<your_token>\');\n\n'
     );
-}*/
+}
