@@ -166,14 +166,6 @@ export default class ContextualAirspacePlugin {
    * @private
    */
 
-  onSourceDataAdd = (data) => {
-    if (this.map.sources.getById('jurisdictions') && this.map.sources.isSourceLoaded('jurisdictions') && !this.baseJurisdictionSourceLoaded) {
-      // Parse jurisdictions
-      this.receiveJurisdictions(this.options.preferredRulesets)
-      this.baseJurisdictionSourceLoaded = true
-    }
-  }
-
   mapSetup = () => {
     this.setupBaseJurisdictionSource()
     this.map.events.add('click', this.handleMapClick)
@@ -208,6 +200,17 @@ export default class ContextualAirspacePlugin {
     })
     // Add Jurisdictions
     this.map.layers.add(atlasPoly)
+  }
+
+  onSourceDataAdd = (data) => {
+    if (this.map.sources.getById('jurisdictions') && this.map.sources.isSourceLoaded('jurisdictions') && !this.baseJurisdictionSourceLoaded) {
+      // Parse jurisdictions
+      setTimeout(() => {
+        this.receiveJurisdictions(this.options.preferredRulesets)
+        this.baseJurisdictionSourceLoaded = true
+      }, 1000);
+
+    }
   }
 
   /**
@@ -290,12 +293,13 @@ export default class ContextualAirspacePlugin {
   receiveJurisdictions = preferredRulesets => {
     // Return early if map is still moving
     if (this.map.map._moving) return
-
+ 
     // Get jurisdictions from map tiles
     let jurisdictions = this.getJurisdictionsFromMap()
     if (!jurisdictions.length) {
       return this.handleNoJurisdictions()
     }
+
     // Check if jurisdictions changed before doing the work to parse them - return early if no change on the map
     if (this.jurisdictions.length) {
       if (!didJurisdictionsChange(this.jurisdictions, jurisdictions)) return
