@@ -205,11 +205,10 @@ export default class ContextualAirspacePlugin {
   onSourceDataAdd = (data) => {
     if (this.map.sources.getById('jurisdictions') && this.map.sources.isSourceLoaded('jurisdictions') && !this.baseJurisdictionSourceLoaded) {
       // Parse jurisdictions
-      setTimeout(() => {
+      if (this.getJurisdictionsFromMap().length > 0) {
         this.receiveJurisdictions(this.options.preferredRulesets)
         this.baseJurisdictionSourceLoaded = true
-      }, 1000);
-
+      }
     }
   }
 
