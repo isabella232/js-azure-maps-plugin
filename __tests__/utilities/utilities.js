@@ -14,21 +14,13 @@ limitations under the License. */
 
 const {
     getOptions,
-    getTimeFilter,
-    isThemeSupported,
     isArrayOfStrings,
-    getBaseJurisdictionLayer,
     organizeJurisdictionRulesetsByType,
     organizeJurisdictionsByRegion,
-    parseRulesets,
     selectInitialRegion,
-    getOverridenRulesets,
-    getDefaultSelectedRulesets,
     getRequiredRulesets,
     getPickOneRulesets,
-    getOptionalRulesets,
-    getSourceUrl,
-    didJurisdictionsChange
+    getOptionalRulesets
 } = require('src/utilities')
 
 const {
