@@ -220,9 +220,9 @@ export default class ContextualAirspacePlugin {
   getJurisdictionsFromMap = () => {
     const layers = this.map.layers.getRenderedShapes()
     // Iterate through layers
-    const jurisdictions = layers.filter(x => x.layer.source == 'jurisdictions' && x.properties.jurisdiction).map(feature => JSON.parse(feature.properties.jurisdiction))
+    let jurisdictions = layers.filter(feature => feature.layer.source == 'jurisdictions' && feature.properties.jurisdiction).map(feature => JSON.parse(feature.properties.jurisdiction)).filter(jurisdiction => !!jurisdiction.rulesets.length)
     // Remove duplicate or empty jurisdictions
-    const uniqueJurisdictions = jurisdictions
+    const uniqueJurisdictions = uniqBy(jurisdictions, 'id')
       .filter(x => x.rulesets.length > 0)
       .filter((obj, pos, arr) => {
         return arr.map(mapObj => mapObj['uuid']).indexOf(obj['uuid']) === pos
@@ -412,37 +412,34 @@ export default class ContextualAirspacePlugin {
     let source = this.map.sources.getById(ruleset.id)
     if (source) return
 
-    if (!this.map.sources.getById(ruleset.id)) {
+    const rulesetIdLayer = new atlas.source.VectorTileSource(ruleset.id, {
+      minZoom: 6,
+      tiles: [getSourceUrl(this.options.rulesetSourceUrl, ruleset.id, ruleset.layers.join(), this.apiKey)],
+      url: null
+    })
 
-      const rulesetIdLayer = new atlas.source.VectorTileSource(ruleset.id, {
-        minZoom: 6,
-        tiles: [getSourceUrl(this.options.rulesetSourceUrl, ruleset.id, ruleset.layers.join(), this.apiKey)],
-        url: null
-      }, "background")
-  
-      this.map.sources.add(rulesetIdLayer)
+    this.map.sources.add(rulesetIdLayer)
 
-      ruleset.layers.forEach(classification => {
-        let layersToAdd = []
-        if (classification !== 'non_geo') {
+    ruleset.layers.forEach(classification => {
+      let layersToAdd = []
+      if (classification !== 'non_geo') {
 
-          this.styles.classifiedLayers.forEach((layer, index) => {
-            if (layer.id.split('|')[1] === classification) {
-              layersToAdd.push(layer)
-            }
-          })
-          if (!layersToAdd.length) {
-            this.styles.unclassifiedLayers.forEach((baseLayer, index) => {
-              this.addLayer(ruleset.id, classification, baseLayer)
-            })
-          } else {
-            layersToAdd.forEach((baseLayer, index) => {
-              this.addLayer(ruleset.id, classification, baseLayer)
-            })
+        this.styles.classifiedLayers.forEach((layer, index) => {
+          if (layer.id.split('|')[1] === classification) {
+            layersToAdd.push(layer)
           }
+        })
+        if (!layersToAdd.length) {
+          this.styles.unclassifiedLayers.forEach((baseLayer, index) => {
+            this.addLayer(ruleset.id, classification, baseLayer)
+          })
+        } else {
+          layersToAdd.forEach((baseLayer, index) => {
+            this.addLayer(ruleset.id, classification, baseLayer)
+          })
         }
-      })
-    }
+      }
+    })
   }
 
   /**
@@ -459,30 +456,32 @@ export default class ContextualAirspacePlugin {
       layer.id = layer.id.replace('unclassified', classification)
     }
 
+    if (!this.map.layers.getLayerById(`${layer.id}|${rulesetId}`)) {
     const paint = {}
-    //styles are in traditional css styles not JS styles (aka cammel case)
-    if (layer.paint) {
-      Object.keys(layer.paint).forEach(style => {
-        paint[convertCssToAzureStyles(camelCase(style))] = layer.paint[style]
-      })
-    }
-    // so converting to cammel case then object merging with other data
+      //styles are in traditional css styles not JS styles (aka cammel case)
+      if (layer.paint) {
+        Object.keys(layer.paint).forEach(style => {
+          paint[convertCssToAzureStyles(camelCase(style))] = layer.paint[style]
+        })
+      }
+      // so converting to cammel case then object merging with other data
 
-    const layerData = {
-      minZoom: classification === 'heliport' && layer.type === 'symbol' ? 11 : 6,
-      sourceLayer: `${rulesetId}_${classification}`,
-    }
-    if (classification === 'tfr' || classification === 'notam') {
-      layerData.filter = getTimeFilter(4, 'hours')
-    }
+      const layerData = {
+        minZoom: classification === 'heliport' && layer.type === 'symbol' ? 11 : 6,
+        sourceLayer: `${rulesetId}_${classification}`,
+      }
+      if (classification === 'tfr' || classification === 'notam') {
+        layerData.filter = getTimeFilter(4, 'hours')
+      }
 
-    const layerDataAndStyles = { ...layerData, ...paint }
-    if (layer.type === 'line') {
-      this.map.layers.add(new atlas.layer.LineLayer(rulesetId, null, layerDataAndStyles), before)
-    } else {
-      const opacityIncreased = {...layerDataAndStyles, fillOpacity: .02}
+      const layerDataAndStyles = { ...layerData, ...paint, filter: layer.filter }
+      if (layer.type === 'line') {
+        this.map.layers.add(new atlas.layer.LineLayer(rulesetId, null, layerDataAndStyles), before)
+      } else {
+        const opacityIncreased = {...layerDataAndStyles, fillOpacity: .05}
 
-      this.map.layers.add(new atlas.layer.PolygonLayer(rulesetId, `${layer.id}|${rulesetId}`, opacityIncreased), before)
+        this.map.layers.add(new atlas.layer.PolygonLayer(rulesetId, `${layer.id}|${rulesetId}`, opacityIncreased), before)
+      }
     }
   }
 
