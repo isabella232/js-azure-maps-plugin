@@ -9,7 +9,7 @@ and interact with AirMap's Contextual Airspace Rules.
 
 ## Requirements
 
-To use the AirMap Contextual Airspace Plugin, you must register as a developer and obtain an API key from the [AirMap Developer Portal](https://dashboard.airmap.io/developer).
+To use the AirMap Azure Maps Contextual Airspace Plugin, you must register as a developer and obtain an API key from the [AirMap Developer Portal](https://dashboard.airmap.io/developer).
 Once your application has been created, simply copy the provided config JSON to provide to the Contextual Airspace Plugin.
 You'll also need to register for a [Azure Maps Access Token](https://azure.microsoft.com/en-in/free/).
 
