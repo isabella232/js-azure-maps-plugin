@@ -22,7 +22,7 @@ if (AIRMAP_API_KEY && AZURE_ACCESS_TOKEN) {
     const map = new atlas.Map("map", {
         center: [-118.270293, 34.039737],
         zoom: 8,
-        style: "road" 
+        style: "road"
     });
 
     const config = {
