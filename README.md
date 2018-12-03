@@ -31,7 +31,7 @@ You'll also need to register for a [Azure Maps Access Token](https://azure.micro
 npm install js-azure-maps-plugin
 ```
 
-> After installing the `TBD` module via npm or bower, you'll need bundle it up along with its dependencies
+> After installing the `js-azure-maps-plugin` module via npm or bower, you'll need bundle it up along with its dependencies
 using a tool like [webpack](https://webpack.github.io/) or [browserify](https://browserify.org). If you don't have a
 build process in place for managing dependencies, it is recommended that you use the module via the CDN.
 [See below](#with-webpack) for instructions on using with webpack and browserify. If you install with bower and intend
