@@ -213,5 +213,5 @@ $ open http://localhost:8080/
 
 ## License
 
-> See [LICENSE](LICENSE.md) for details.
+> See [LICENSE](LICENSE) for details.
 
