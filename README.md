@@ -6,8 +6,8 @@
 
 ## Introduction
 
-A control for [Azure Maps](https://azure.microsoft.com/en-us/services/azure-maps/) Azure Maps JS plugin to view
-and interact with AirMap's Contextual Airspace Rules.
+A plugin for [Azure Maps](https://azure.microsoft.com/en-us/services/azure-maps/) that allows 
+you to view and interact with [AirMap's Contextual Airspace](https://developers.airmap.com/docs/contextual-airspace-overview) advisory layers.
 
 ## Requirements
 
