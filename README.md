@@ -2,6 +2,8 @@
 
 # AirMap's Azure Maps Contextual Airspace Plugin
 
+![Screenshot](examples/screenshot.png)
+
 ## Introduction
 
 A control for [Azure Maps](https://azure.microsoft.com/en-us/services/azure-maps/) Azure Maps JS plugin to view
