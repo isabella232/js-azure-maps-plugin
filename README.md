@@ -19,10 +19,10 @@ You'll also need to register for a [Azure Maps Access Token](https://azure.micro
 
 ```html
 <!-- Latest patch release -->
-<script src="TBD"></script>
+<script src="https://cdn.airmap.io/js/azure-maps-plugin/1.0.0/airmap.contextual-airspace-plugin.min.js"></script>
 
 <!-- Latest minor release -->
-<script src="TBD"></script>
+<script src="https://cdn.airmap.io/js/azure-maps-plugin/1.0.0/airmap.contextual-airspace-plugin.min.js"></script>
 ```
 
 ### From [npm](https://npmjs.org)
@@ -47,7 +47,7 @@ Here's an example of a minimal setup. See [Documentation](#documentation) for mo
     <head>
         <title>Azure Maps Contextual Airspace Plugin</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <script src="TBD" async=false defer=false></script>
+        <script src="https://cdn.airmap.io/js/azure-maps-plugin/1.0.0/airmap.contextual-airspace-plugin.min.js" async=false defer=false></script>
         <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/css/atlas.min.css?api-version=1" type="text/css" />
         <script src="https://atlas.microsoft.com/sdk/js/atlas.min.js?api-version=1"></script>
     
