@@ -187,7 +187,7 @@ all dependencies is the preferred approach (webpack recommends against using pre
 
 > [Generated API Documentation](API.md)
 
-> [Official AirMap Docs](https://developers.airmap.com/docs/js-getting-started)
+> [Official AirMap Docs](https://developers.airmap.com/docs/getting-started-with-airmap)
 
 ### Developing
 
