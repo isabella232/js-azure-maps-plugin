@@ -195,7 +195,7 @@ all dependencies is the preferred approach (webpack recommends against using pre
 [http://localhost:8080/](http://localhost:8080/) in your browser. The server will
 listen for changes and live reload as updates are made.
 
-If this is your first time developing with the Contextual Airspace plugin, you'll need to store an AirMap API Key and Mapbox Access Token
+If this is your first time developing with the Contextual Airspace plugin, you'll need to store an AirMap API Key and Azure Maps Access Token
 in your localStorage for use on the `http://localhost:8080/` demo page:
 
 ```javascript
