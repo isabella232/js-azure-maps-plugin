@@ -32,7 +32,7 @@ export const config = {
         "client_id": "",
         "callback_url": ""
     },
-    "mapbox": {
-        "access_token": 'MAPBOX_ACCESS_TOKEN'
+    "azuremaps": {
+        "access_token": 'AZURE_ACCESS_TOKEN'
     }
 }

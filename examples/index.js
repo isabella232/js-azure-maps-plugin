@@ -70,10 +70,10 @@ if (AIRMAP_API_KEY && AZURE_ACCESS_TOKEN) {
 
 } else {
     console.error(
-        'Missing AIRMAP_API_KEY or MAPBOX_ACCESS_TOKEN. ' +
+        'Missing AIRMAP_API_KEY or AZURE_ACCESS_TOKEN. ' +
         'These are required for developing locally.\n\n' +
         'Please save these values in localStorage by entering the following in your browser console:\n\n' +
         'localStorage.setItem(\'AIRMAP_API_KEY\', \'<your_key>\');\n' +
-        'localStorage.setItem(\'MAPBOX_ACCESS_TOKEN\', \'<your_token>\');\n\n'
+        'localStorage.setItem(\'AZURE_ACCESS_TOKEN\', \'<your_token>\');\n\n'
     );
 }
